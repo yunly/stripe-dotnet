@@ -54,6 +54,22 @@ namespace Stripe
         internal ExpandableField<Customer> InternalCustomer { get; set; }
         #endregion
 
+        #region Expandable CustomerBalanceTransaction
+
+        /// <summary>
+        /// ID of the customer balance transaction related to this credit note.
+        /// </summary>
+        [JsonIgnore]
+        public string CustomerBalanceTransactionId => this.InternalCustomerBalanceTransaction.Id;
+
+        [JsonIgnore]
+        public CustomerBalanceTransaction CustomerBalanceTransaction => this.InternalCustomerBalanceTransaction.ExpandedObject;
+
+        [JsonProperty("customer_balance_transaction")]
+        [JsonConverter(typeof(ExpandableFieldConverter<CustomerBalanceTransaction>))]
+        internal ExpandableField<CustomerBalanceTransaction> InternalCustomerBalanceTransaction { get; set; }
+        #endregion
+
         #region Expandable Invoice
 
         /// <summary>
