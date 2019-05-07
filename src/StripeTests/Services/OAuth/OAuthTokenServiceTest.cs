@@ -42,6 +42,7 @@ namespace StripeTests
         {
             var options = new OAuthAuthorizeUrlOptions
             {
+                ClientId = ClientId,
                 Scope = "read_write",
                 State = "csrf_token",
                 StripeUser = new OAuthAuthorizeUrlStripeUserOptions
@@ -71,7 +72,11 @@ namespace StripeTests
         [Fact]
         public void AuthorizeUrl_Express()
         {
-            var options = new OAuthAuthorizeUrlOptions { Scope = "read_write" };
+            var options = new OAuthAuthorizeUrlOptions
+            {
+                ClientId = ClientId,
+                Scope = "read_write",
+            };
 
             var uri = this.service.AuthorizeUrl(options, express: true);
 

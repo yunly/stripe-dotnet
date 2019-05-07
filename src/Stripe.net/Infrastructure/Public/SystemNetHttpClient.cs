@@ -58,6 +58,16 @@ namespace Stripe
         public static TimeSpan MinNetworkRetriesDelay => TimeSpan.FromMilliseconds(500);
 
         /// <summary>
+        /// Gets or sets the maximum number of times that the library will retry requests that
+        /// appear to have failed due to an intermittent problem.
+        /// </summary>
+        public int MaxNetworkRetries { get; set; }
+
+        /// <summary>Gets or sets a value indicating whether to sleep between network retries.</summary>
+        /// <remarks>This is an internal property meant to be used in tests.</remarks>
+        internal bool NetworkRetriesSleep { get; set; } = true;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="System.Net.Http.HttpClient"/> class
         /// with default parameters.
         /// </summary>
@@ -125,7 +135,7 @@ namespace Stripe
 
                 duration = stopwatch.Elapsed;
 
-                if (!ShouldRetry(
+                if (!this.ShouldRetry(
                     retry,
                     requestException != null,
                     request.Method,
@@ -196,14 +206,14 @@ namespace Stripe
             return userAgent;
         }
 
-        private static bool ShouldRetry(
+        private bool ShouldRetry(
             int numRetries,
             bool error,
             HttpMethod method,
             HttpStatusCode? statusCode)
         {
             // Do not retry if we are out of retries.
-            if (numRetries >= StripeConfiguration.MaxNetworkRetries)
+            if (numRetries >= this.MaxNetworkRetries)
             {
                 return false;
             }
@@ -255,7 +265,7 @@ namespace Stripe
         private TimeSpan SleepTime(int numRetries)
         {
             // We disable sleeping in some cases for tests.
-            if (!StripeConfiguration.NetworkRetriesSleep)
+            if (!this.NetworkRetriesSleep)
             {
                 return TimeSpan.Zero;
             }

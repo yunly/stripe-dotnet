@@ -16,14 +16,17 @@ namespace StripeTests
 
     public class TelemetryTest : BaseStripeTest, IDisposable
     {
+        private readonly IStripeClient origStripeClient;
+
         public TelemetryTest(MockHttpClientFixture mockHttpClientFixture)
             : base(mockHttpClientFixture)
         {
+            this.origStripeClient = StripeConfiguration.StripeClient;
         }
 
         public void Dispose()
         {
-            this.ResetStripeClient();
+            StripeConfiguration.StripeClient = this.origStripeClient;
         }
 
         [Fact]
@@ -141,7 +144,9 @@ namespace StripeTests
 
             var httpClient = new System.Net.Http.HttpClient(
                 this.MockHttpClientFixture.MockHandler.Object);
-            var stripeClient = new StripeClient(new Stripe.SystemNetHttpClient(httpClient));
+            var stripeClient = new StripeClient(
+                "sk_test_123",
+                httpClient: new SystemNetHttpClient(httpClient));
 
             StripeConfiguration.StripeClient = stripeClient;
         }

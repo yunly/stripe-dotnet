@@ -26,8 +26,9 @@ namespace StripeTests
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
                 .Returns(Task.FromResult(responseMessage));
-            var client = new SystemNetHttpClient(new System.Net.Http.HttpClient(mockHandler.Object));
-            var request = new StripeRequest(HttpMethod.Post, "/foo", null, null);
+            var client = new SystemNetHttpClient(new HttpClient(mockHandler.Object));
+            var options = new RequestOptions { ApiKey = "sk_test" };
+            var request = new StripeRequest(new StripeClient("sk_test_123"), HttpMethod.Post, "/foo", null, options);
 
             var response = await client.MakeRequestAsync(request);
 
@@ -61,7 +62,8 @@ namespace StripeTests
                     .Returns(Task.FromResult(responseMessage));
 
                 var client = new SystemNetHttpClient(new System.Net.Http.HttpClient(mockHandler.Object));
-                var request = new StripeRequest(HttpMethod.Post, "/foo", null, null);
+                var options = new RequestOptions { ApiKey = "sk_test" };
+                var request = new StripeRequest(new StripeClient("sk_test_123"), HttpMethod.Post, "/foo", null, options);
                 await client.MakeRequestAsync(request);
 
                 mockHandler.Protected()

@@ -15,14 +15,17 @@ namespace StripeTests
         public NetworkRetriesTest(MockHttpClientFixture mockHttpClientFixture)
             : base(mockHttpClientFixture)
         {
-            StripeConfiguration.MaxNetworkRetries = 2;
-            StripeConfiguration.NetworkRetriesSleep = false;
+            var httpClient = (StripeConfiguration.StripeClient as StripeClient).HttpClient as SystemNetHttpClient;
+            httpClient.MaxNetworkRetries = 2;
+            httpClient.NetworkRetriesSleep = false;
         }
 
         public void Dispose()
         {
-            StripeConfiguration.MaxNetworkRetries = 0;
-            StripeConfiguration.NetworkRetriesSleep = true;
+            var httpClient = (StripeConfiguration.StripeClient as StripeClient).HttpClient as SystemNetHttpClient;
+            httpClient.MaxNetworkRetries = 0;
+            httpClient.NetworkRetriesSleep = true;
+
             this.MockHttpClientFixture.Reset();
         }
 

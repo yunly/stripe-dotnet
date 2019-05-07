@@ -11,19 +11,105 @@ namespace Stripe
     /// </summary>
     public class StripeClient : IStripeClient
     {
+        private string apiKey;
+
+        private string clientId;
+
         /// <summary>Initializes a new instance of the <see cref="StripeClient"/> class.</summary>
+        /// <param name="apiKey">The API key to use to authenticate requests with Stripe.</param>
+        /// <param name="clientId">The client ID to use in OAuth requests.</param>
         /// <param name="httpClient">
         /// The <see cref="IHttpClient"/> client to use. If <c>null</c>, an HTTP client will be
         /// created with default parameters.
         /// </param>
-        public StripeClient(IHttpClient httpClient = null)
+        public StripeClient(
+            string apiKey,
+            string clientId = null,
+            IHttpClient httpClient = null)
         {
+            this.ApiKey = apiKey;
+            this.ClientId = clientId;
             this.HttpClient = httpClient ?? BuildDefaultHttpClient();
         }
 
+        /// <summary>Default base URL for Stripe's API.</summary>
+        public static string DefaultApiBase => "https://api.stripe.com";
+
+        /// <summary>Default base URL for Stripe's OAuth API.</summary>
+        public static string DefaultConnectBase => "https://connect.stripe.com";
+
+        /// <summary>Default base URL for Stripe's Files API.</summary>
+        public static string DefaultFilesBase => "https://files.stripe.com";
+
+        /// <summary>Gets or sets the base URL for Stripe's API.</summary>
+        /// <value>The base URL for Stripe's API.</value>
+        public string ApiBase { get; set; } = DefaultApiBase;
+
+#if NET45 || NETSTANDARD2_0
+        /// <summary>Gets or sets the API key.</summary>
+        /// <value>The API key.</value>
+        /// <remarks>
+        /// You can also set the API key using the <c>StripeApiKey</c> key in
+        /// <see cref="System.Configuration.ConfigurationManager.AppSettings"/>.
+        /// </remarks>
+#else
+        /// <summary>Gets or sets the API key.</summary>
+        /// <value>The API key.</value>
+#endif
+        public string ApiKey
+        {
+            get
+            {
+#if NET45 || NETSTANDARD2_0
+                if (string.IsNullOrEmpty(this.apiKey))
+                {
+                    this.apiKey = System.Configuration.ConfigurationManager.AppSettings["StripeApiKey"];
+                }
+#endif
+                return this.apiKey;
+            }
+
+            set => this.apiKey = value;
+        }
+
+#if NET45 || NETSTANDARD2_0
+        /// <summary>Gets or sets the client ID.</summary>
+        /// <value>The client ID.</value>
+        /// <remarks>
+        /// You can also set the client ID using the <c>StripeClientId</c> key in
+        /// <see cref="System.Configuration.ConfigurationManager.AppSettings"/>.
+        /// </remarks>
+#else
+        /// <summary>Gets or sets the client ID.</summary>
+        /// <value>The client ID.</value>
+#endif
+        public string ClientId
+        {
+            get
+            {
+#if NET45 || NETSTANDARD2_0
+                if (string.IsNullOrEmpty(this.clientId))
+                {
+                    this.clientId = System.Configuration.ConfigurationManager.AppSettings["StripeClientId"];
+                }
+#endif
+                return this.clientId;
+            }
+
+            set => this.clientId = value;
+        }
+
+        /// <summary>Gets or sets the base URL for Stripe's OAuth API.</summary>
+        /// <value>The base URL for Stripe's OAuth API.</value>
+        public string ConnectBase { get; set; } = DefaultConnectBase;
+
+        /// <summary>Gets or sets the base URL for Stripe's Files API.</summary>
+        /// <value>The base URL for Stripe's Files API.</value>
+        public string FilesBase { get; set; } = DefaultFilesBase;
+
         /// <summary>Gets the <see cref="IHttpClient"/> used to send HTTP requests.</summary>
         /// <value>The <see cref="IHttpClient"/> used to send HTTP requests.</value>
-        public IHttpClient HttpClient { get; }
+        public IHttpClient HttpClient { get; internal set; }
 
         /// <summary>Sends a request to Stripe's API as an asynchronous operation.</summary>
         /// <typeparam name="T">Type of the Stripe entity returned by the API.</typeparam>
@@ -42,7 +128,7 @@ namespace Stripe
             CancellationToken cancellationToken = default(CancellationToken))
             where T : IStripeEntity
         {
-            var request = new StripeRequest(method, path, options, requestOptions);
+            var request = new StripeRequest(this, method, path, options, requestOptions);
 
             var response = await this.HttpClient.MakeRequestAsync(request, cancellationToken);
 
@@ -51,7 +137,9 @@ namespace Stripe
 
         private static IHttpClient BuildDefaultHttpClient()
         {
-            return new SystemNetHttpClient();
+            var httpClient = new SystemNetHttpClient();
+            httpClient.MaxNetworkRetries = StripeConfiguration.MaxNetworkRetries;
+            return httpClient;
         }
 
         private static T ProcessResponse<T>(StripeResponse response)

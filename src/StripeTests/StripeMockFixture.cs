@@ -14,10 +14,7 @@ namespace StripeTests
         /// </remarks>
         private const string MockMinimumVersion = "0.56.0";
 
-        private readonly string origApiBase;
-        private readonly string origFilesBase;
-        private readonly string origApiKey;
-        private readonly string origClientId;
+        private readonly IStripeClient origStripeClient;
 
         private readonly string port;
 
@@ -34,23 +31,19 @@ namespace StripeTests
 
             this.EnsureStripeMockMinimumVersion();
 
-            this.origApiBase = StripeConfiguration.ApiBase;
-            this.origFilesBase = StripeConfiguration.FilesBase;
-            this.origApiKey = StripeConfiguration.ApiKey;
-            this.origClientId = StripeConfiguration.ClientId;
+            var stripeClient = new StripeClient(
+                apiKey: "sk_test_123",
+                clientId: "ca_123");
+            stripeClient.ApiBase = $"http://localhost:{this.port}";
+            stripeClient.FilesBase = $"http://localhost:{this.port}";
 
-            StripeConfiguration.ApiBase = $"http://localhost:{this.port}";
-            StripeConfiguration.FilesBase = $"http://localhost:{this.port}";
-            StripeConfiguration.ApiKey = "sk_test_123";
-            StripeConfiguration.ClientId = "ca_123";
+            this.origStripeClient = StripeConfiguration.StripeClient;
+            StripeConfiguration.StripeClient = stripeClient;
         }
 
         public void Dispose()
         {
-            StripeConfiguration.ApiBase = this.origApiBase;
-            StripeConfiguration.FilesBase = this.origFilesBase;
-            StripeConfiguration.ApiKey = this.origApiKey;
-            StripeConfiguration.ClientId = this.origClientId;
+            StripeConfiguration.StripeClient = this.origStripeClient;
 
             StripeMockHandler.StopStripeMock();
         }

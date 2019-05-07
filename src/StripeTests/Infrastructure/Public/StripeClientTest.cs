@@ -17,7 +17,9 @@ namespace StripeTests
         public StripeClientTest()
         {
             this.httpClient = new DummyHttpClient();
-            this.stripeClient = new StripeClient(this.httpClient);
+            this.stripeClient = new StripeClient(
+                apiKey: "sk_test_client",
+                httpClient: this.httpClient);
             this.options = new ChargeCreateOptions
             {
                 Amount = 123,
@@ -42,6 +44,10 @@ namespace StripeTests
             Assert.NotNull(charge);
             Assert.Equal("ch_123", charge.Id);
             Assert.Equal(response, charge.StripeResponse);
+
+            Assert.Equal(
+                "Bearer sk_test_client",
+                this.httpClient.LastRequest.AuthorizationHeader.ToString());
         }
 
         [Fact]
@@ -153,12 +159,16 @@ namespace StripeTests
 
         private class DummyHttpClient : IHttpClient
         {
+            public StripeRequest LastRequest { get; private set; }
+
             public StripeResponse Response { get; set; }
 
             public Task<StripeResponse> MakeRequestAsync(
                 StripeRequest request,
                 CancellationToken cancellationToken = default(CancellationToken))
             {
+                this.LastRequest = request;
+
                 if (this.Response == null)
                 {
                     throw new StripeTestException("Response is null");
